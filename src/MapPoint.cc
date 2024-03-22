@@ -66,6 +66,9 @@ MapPoint::MapPoint(const cv::Mat &Pos,  //地图点的世界坐标
     // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
     unique_lock<mutex> lock(mpMap->mMutexPointCreation);
     mnId=nNextId++;
+    
+    mId=make_pair(mnId,0);
+
 }
 
 /*

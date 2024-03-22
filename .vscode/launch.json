@@ -8,7 +8,7 @@
             "name": "(gdb) 启动",
             "type": "cppdbg",
             "request": "launch",
-            "program": "/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/mono_tum",
+            "program": "/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/load_tum",
             "args": ["/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Vocabulary/ORBvoc.txt","/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/TUM1.yaml","/home/chj/rgbd_dataset_freiburg1_xyz"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

@@ -32,6 +32,7 @@
 
 #include "SystemSetting.h"
 #include "estd.h"
+#include "iostream"
 
 
 
@@ -52,7 +53,9 @@ class Map
 public:
 //加载地图信息
     // void Load(const string &filename,SystemSetting* mySystemSetting);//只是加载地图进行可视化，没有重定位
- 
+
+typedef pair<size_t,size_t> idpair;
+
 void Load(const string &filename,SystemSetting* mySystemSetting, KeyFrameDatabase* mpKeyFrameDatabase);//有重定位功能
 
     MapPoint* LoadMapPoint(ifstream &f);

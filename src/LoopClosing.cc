@@ -82,7 +82,7 @@ void LoopClosing::Run()
         if(CheckNewKeyFrames())
         {
             // Detect loop candidates and check covisibility consistency
-            if(DetectLoop())
+            if(DetectLoop())//其实就是判断mvpEnoughConsistentCandidates是否为空，不为空即检测到闭环了
             {
                // Compute similarity transformation [sR|t]
                // In the stereo/RGBD case s=1
@@ -181,10 +181,10 @@ bool LoopClosing::DetectLoop()
     }
 
     // Query the database imposing the minimum score
-    // Step 4：在kfdb中的所有关键帧中找出闭环候选帧（注意不和当前帧连接）
+    // Step 4：在kfdb中的所有关键帧中找出闭环候选帧（注意不和当前帧连接），前三步都是为了这一步的铺垫
     // minScore的作用：认为和当前关键帧具有回环关系的关键帧,不应该低于当前关键帧的相邻关键帧的最低的相似度minScore
     // 得到的这些关键帧,和当前关键帧具有较多的公共单词,并且相似度评分都挺高
-    vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore);
+    vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore);//函数返回vpLoopCandidates
 
     // If there are no loop candidates, just add new keyframe and return false
     // 如果没有闭环候选帧，返回false
@@ -343,8 +343,8 @@ bool LoopClosing::DetectLoop()
 
 /**
  * @brief 计算当前关键帧和上一步闭环候选帧的Sim3变换
- * 1. 遍历闭环候选帧集，筛选出与当前帧的匹配特征点数大于20的候选帧集合，并为每一个候选帧构造一个Sim3Solver
- * 2. 对每一个候选帧进行 Sim3Solver 迭代匹配，直到有一个候选帧匹配成功，或者全部失败
+ * 1. 遍历闭环候选帧集，筛选出与当前帧的匹配特征点数大于20的候选帧集合，并为每一个候选帧构造一个Sim3Solver——初选
+ * 2. 对每一个候选帧进行 Sim3Solver 迭代匹配，直到有一个候选帧匹配成功，或者全部失败——不太懂
  * 3. 取出闭环匹配上关键帧的相连关键帧，得到它们的地图点放入 mvpLoopMapPoints
  * 4. 将闭环匹配上关键帧以及相连关键帧的地图点投影到当前关键帧进行投影匹配
  * 5. 判断当前帧与检测出的所有闭环关键帧是否有足够多的地图点匹配
@@ -606,7 +606,7 @@ bool LoopClosing::ComputeSim3()
 
 /**
  * @brief 闭环矫正
- * 1. 通过求解的Sim3以及相对姿态关系，调整与当前帧相连的关键帧位姿以及这些关键帧观测到的地图点位置（相连关键帧---当前帧） 
+ * 1. 通过求解的Sim3以及相对姿态关系，调整与当前帧（mlploopkeyframequeue中的一个）相连的关键帧位姿以及这些关键帧观测到的地图点位置（相连关键帧---当前帧） 
  * 2. 将闭环帧以及闭环帧相连的关键帧的地图点和与当前帧相连的关键帧的点进行匹配（当前帧+相连关键帧---闭环帧+相连关键帧）     
  * 3. 通过MapPoints的匹配关系更新这些帧之间的连接关系，即更新covisibility graph                                      
  * 4. 对Essential Graph（Pose Graph）进行优化，MapPoints的位置则根据优化后的位姿做相对应的调整                        

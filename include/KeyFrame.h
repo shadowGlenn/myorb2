@@ -63,6 +63,8 @@ class InitKeyFrame;
 class KeyFrame
 {
 public:
+
+ 
 KeyFrame(InitKeyFrame &initkf,Map* pMap,KeyFrameDatabase* pKFDB,vector<MapPoint*>& vpMapPoints);
  
     /**
@@ -308,6 +310,8 @@ public:
     static long unsigned int nNextId;
     /// 在nNextID的基础上加1就得到了mnID，为当前KeyFrame的ID号
     long unsigned int mnId;
+    typedef pair<size_t,size_t> idpair;
+    idpair mId;
     /// 每个KeyFrame基本属性是它是一个Frame，KeyFrame初始化的时候需要Frame，
     /// mnFrameId记录了该KeyFrame是由哪个Frame初始化的
     const long unsigned int mnFrameId;

@@ -60,6 +60,9 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
 {
     // 获取id
     mnId=nNextId++;
+    
+    mId=make_pair(mnId,0);
+
 
     // 根据指定的普通帧, 初始化用于加速匹配的网格对象信息; 其实就把每个网格中有的特征点的索引复制过来
     mGrid.resize(mnGridCols);

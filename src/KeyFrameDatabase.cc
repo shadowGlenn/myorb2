@@ -104,7 +104,7 @@ void KeyFrameDatabase::clear()
  * @brief 在闭环检测中找到与该关键帧可能闭环的关键帧（注意不和当前帧连接）
  * Step 1：找出和当前帧具有公共单词的所有关键帧，不包括与当前帧连接的关键帧
  * Step 2：只和具有共同单词较多的（最大数目的80%以上）关键帧进行相似度计算 
- * Step 3：计算上述候选帧对应的共视关键帧组的总得分，只取最高组得分75%以上的组
+ * Step 3：计算上述候选帧对应的《 共视关键帧组 》的总得分，只取最高组得分75%以上的组
  * Step 4：得到上述组中分数最高的关键帧作为闭环候选关键帧
  * @param[in] pKF               需要闭环检测的关键帧
  * @param[in] minScore          候选闭环关键帧帧和当前关键帧的BoW相似度至少要大于minScore
@@ -161,7 +161,7 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
     list<pair<float,KeyFrame*> > lScoreAndMatch;
 
     // Only compare against those keyframes that share enough words
-    // Step 2：统计上述所有闭环候选帧中与当前帧具有共同单词最多的单词数，用来决定相对阈值 
+    // Step 2：统计上述所有闭环候选帧中与当前帧具有共同单词最多的单词数，即某个候选帧与当前帧具有的共同单词最多，假设为40个，用来决定相对阈值 
     int maxCommonWords=0;
     for(list<KeyFrame*>::iterator lit=lKFsSharingWords.begin(), lend= lKFsSharingWords.end(); lit!=lend; lit++)
     {
@@ -202,13 +202,14 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
     list<pair<float,KeyFrame*> > lAccScoreAndMatch;
     float bestAccScore = minScore;
 
+//前三步都是在遍历kfdatabase，从中挑选出一些和当前帧的相似程度较高的帧，存放在lScoreAndMatch中
     // Lets now accumulate score by covisibility
     // 单单计算当前帧和某一关键帧的相似性是不够的，这里将与关键帧相连（权值最高，共视程度最高）的前十个关键帧归为一组，计算累计得分
     // Step 4：计算上述候选帧对应的共视关键帧组的总得分，得到最高组得分bestAccScore，并以此决定阈值minScoreToRetain
-    for(list<pair<float,KeyFrame*> >::iterator it=lScoreAndMatch.begin(), itend=lScoreAndMatch.end(); it!=itend; it++)
+    for(list<pair<float,KeyFrame*> >::iterator it=lScoreAndMatch.begin(), itend=lScoreAndMatch.end(); it!=itend; it++)//遍历lScoreAndMatch中的每一帧，并得到每一帧的共视关键帧组，把组里的10个候选帧的分数加起来（注意只有pKF2也在闭环候选帧中，且公共单词数超过最小要求，才能贡献分数）
     {
         KeyFrame* pKFi = it->second;
-        vector<KeyFrame*> vpNeighs = pKFi->GetBestCovisibilityKeyFrames(10);
+        vector<KeyFrame*> vpNeighs = pKFi->GetBestCovisibilityKeyFrames(10);//候选帧的共视关键帧组
 
         float bestScore = it->first; // 该组最高分数
         float accScore = it->first;  // 该组累计得分
@@ -217,8 +218,8 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
         for(vector<KeyFrame*>::iterator vit=vpNeighs.begin(), vend=vpNeighs.end(); vit!=vend; vit++)
         {
             KeyFrame* pKF2 = *vit;
-            // 只有pKF2也在闭环候选帧中，且公共单词数超过最小要求，才能贡献分数
-            if(pKF2->mnLoopQuery==pKF->mnId && pKF2->mnLoopWords>minCommonWords)
+            // 只有pKF2也在闭环候选帧中（因为闭环候选帧的共视关键帧组里的某个帧，不一定是闭环候选帧）且公共单词数超过最小要求，才能贡献分数
+            if(pKF2->mnLoopQuery==pKF->mnId && pKF2->mnLoopWords>minCommonWords)//pkf是需要闭环检测的关键帧，即mlploopkeyframequeue中取出来的一个帧，闭环检测就是要对其中的每个帧都进行操作
             {
                 accScore+=pKF2->mLoopScore;
                 // 统计得到组里分数最高的关键帧
@@ -231,29 +232,29 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
         }
 
         lAccScoreAndMatch.push_back(make_pair(accScore,pBestKF));
-        // 记录所有组中组得分最高的组，用于确定相对阈值
+        // 记录所有组中组得分最高的组，用于确定相对阈值，假设为100分
         if(accScore>bestAccScore)
             bestAccScore=accScore;
     }
 
     // Return all those keyframes with a score higher than 0.75*bestScore
-    // 所有组中最高得分的0.75倍，作为最低阈值
+    // 所有组中最高得分的0.75倍，作为最低阈值，那么组的得分不能低于75分
     float minScoreToRetain = 0.75f*bestAccScore;
 
     set<KeyFrame*> spAlreadyAddedKF;
     vector<KeyFrame*> vpLoopCandidates;
     vpLoopCandidates.reserve(lAccScoreAndMatch.size());
 
-    // Step 5：只取组得分大于阈值的组，得到组中分数最高的关键帧们作为闭环候选关键帧
-    for(list<pair<float,KeyFrame*> >::iterator it=lAccScoreAndMatch.begin(), itend=lAccScoreAndMatch.end(); it!=itend; it++)
+    // Step 5：《优中选优》：只取组得分大于阈值（此处为100×0.75=75分）的组，得到组中分数最高的关键帧们作为闭环候选关键帧，添加到vpLoopCandidates中
+    for(list<pair<float,KeyFrame*> >::iterator it=lAccScoreAndMatch.begin(), itend=lAccScoreAndMatch.end(); it!=itend; it++)//遍历所有组
     {
-        if(it->first>minScoreToRetain)
+        if(it->first>minScoreToRetain)//只取组得分大于阈值的组
         {
-            KeyFrame* pKFi = it->second;
+            KeyFrame* pKFi = it->second;//得到组中分数最高的关键帧
             // spAlreadyAddedKF 是为了防止重复添加
             if(!spAlreadyAddedKF.count(pKFi))
             {
-                vpLoopCandidates.push_back(pKFi);
+                vpLoopCandidates.push_back(pKFi);//存放了每组里面最优的一个帧
                 spAlreadyAddedKF.insert(pKFi);
             }
         }

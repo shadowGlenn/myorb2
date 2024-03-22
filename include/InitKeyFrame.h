@@ -33,7 +33,9 @@ public:
     ORBVocabulary* pVocabulary;
     //KeyFrameDatabase* pKeyFrameDatabase;
  
-    long unsigned int nId;
+    // long unsigned int nId;
+    typedef pair<size_t,size_t> idpair;
+    idpair Id;
     double TimeStamp;
     
     float fGridElementWidthInv;

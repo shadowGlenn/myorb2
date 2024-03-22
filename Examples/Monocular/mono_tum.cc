@@ -31,7 +31,9 @@
 using namespace std;
 
 
-void LoadImages(const string &strFile, vector<string> &vstrImageFilenames,
+void LoadImagesfront(const string &strFile, vector<string> &vstrImageFilenames,
+                vector<double> &vTimestamps);
+void LoadImagesback(const string &strFile, vector<string> &vstrImageFilenames,
                 vector<double> &vTimestamps);
 
 int main(int argc, char **argv)
@@ -46,15 +48,13 @@ int main(int argc, char **argv)
     vector<string> vstrImageFilenames;
     vector<double> vTimestamps;
     string strFile = string(argv[3])+"/rgb.txt";
-    LoadImages(strFile, vstrImageFilenames, vTimestamps);
+    LoadImagesfront(strFile, vstrImageFilenames, vTimestamps);//map0
+    // LoadImagesback(strFile, vstrImageFilenames, vTimestamps);//map1
 
     int nImages = vstrImageFilenames.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
-
-    // SLAM.LoadMap0("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map0.bin");
-    // SLAM.LoadMap1("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map1.bin");
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -110,24 +110,22 @@ int main(int argc, char **argv)
     }
 
     // Stop all threads
-    SLAM.SaveMap("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map.bin");
-    SLAM.SaveMap0("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map0.bin");
-    // SLAM.SaveMap1("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map1.bin");
+    SLAM.SaveMap("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map0.bin");
     SLAM.Shutdown();
 
     // Tracking time statistics
-    // sort(vTimesTrack.begin(),vTimesTrack.end());
-    // float totaltime = 0;
-    // for(int ni=0; ni<nImages; ni++)
-    // {
-    //     totaltime+=vTimesTrack[ni];
-    // }
-    // cout << "-------" << endl << endl;
-    // cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
-    // cout << "mean tracking time: " << totaltime/nImages << endl;
+    sort(vTimesTrack.begin(),vTimesTrack.end());
+    float totaltime = 0;
+    for(int ni=0; ni<nImages; ni++)
+    {
+        totaltime+=vTimesTrack[ni];
+    }
+    cout << "-------" << endl << endl;
+    cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
+    cout << "mean tracking time: " << totaltime/nImages << endl;
 
     // Save camera trajectory
-    // SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 
     return 0;
 }
@@ -140,41 +138,42 @@ int main(int argc, char **argv)
  * @param[in&out] vTimestamps           记录时间戳
  */
 //读取前500张图像
-// void LoadImages(const string &strFile, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)
-// {
-//     ifstream f;
-//     f.open(strFile.c_str());
+void LoadImagesfront(const string &strFile, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)
+{
+    ifstream f;
+    f.open(strFile.c_str());
 
-//     // skip first three lines
-//     // 前三行是注释，跳过
-//     string s0;
-//     getline(f,s0);
-//     getline(f,s0);
-//     getline(f,s0);
+    // skip first three lines
+    // 前三行是注释，跳过
+    string s0;
+    getline(f,s0);
+    getline(f,s0);
+    getline(f,s0);
     
-//     int lineCount = 0;
-//     while(lineCount < 500 && !f.eof())
-//     {
-//         string s;
-//         getline(f,s);
-//         if(!s.empty())
-//         {
-//             stringstream ss;
-//             ss << s;
-//             double t;
-//             string sRGB;
-//             ss >> t;
-//             vTimestamps.push_back(t);
-//             ss >> sRGB;
-//             vstrImageFilenames.push_back(sRGB);
-//             lineCount++;
-//         }
-//     }
-// }
+    int lineCount = 0;
+    while(lineCount < 500 && !f.eof())
+    {
+        string s;
+        getline(f,s);
+        if(!s.empty())
+        {
+            stringstream ss;
+            ss << s;
+            double t;
+            string sRGB;
+            ss >> t;
+            vTimestamps.push_back(t);
+            ss >> sRGB;
+            vstrImageFilenames.push_back(sRGB);
+            lineCount++;
+        }
+    }
+}
 
 //读取后501张图像,数据集总共是798张
-void LoadImages(const string &strFile, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)
+void LoadImagesback(const string &strFile, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)
 {
+    
     ifstream f;
     f.open(strFile.c_str());
 

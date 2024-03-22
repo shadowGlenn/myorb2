@@ -55,9 +55,12 @@ Map::Map():mnMaxKFid(0)
 void Map::AddKeyFrame(KeyFrame *pKF)
 {
     unique_lock<mutex> lock(mMutexMap);
-    mspKeyFrames.insert(pKF);
-    if(pKF->mnId>mnMaxKFid)
-        mnMaxKFid=pKF->mnId;
+    // mspKeyFrames.insert(pKF);
+    mmpKeyFrames[pKF->mId] = pKF;
+    if(pKF->mId.first>mnMaxKFid)
+        mnMaxKFid=pKF->mId.first;
+            //     if(pKF->mUniqueId>mnMaxKFidUnique)
+            // mnMaxKFidUnique=pKF->mUniqueId;这个暂时用不上
 }
 
 /*
@@ -68,7 +71,8 @@ void Map::AddKeyFrame(KeyFrame *pKF)
 void Map::AddMapPoint(MapPoint *pMP)
 {
     unique_lock<mutex> lock(mMutexMap);
-    mspMapPoints.insert(pMP);
+    // mspMapPoints.insert(pMP);
+    mmpMapPoints[pMP->mId] = pMP;//pMP的mnId正常，但是mId一直都是（0，0），应该是没有把mId和原来的mnId联系起来，mId = make_pair(mnId,clientID)
 }
 
 /**
@@ -79,7 +83,9 @@ void Map::AddMapPoint(MapPoint *pMP)
 void Map::EraseMapPoint(MapPoint *pMP)
 {
     unique_lock<mutex> lock(mMutexMap);
-    mspMapPoints.erase(pMP);
+    // mspMapPoints.erase(pMP);
+    std::map<idpair,MapPoint*>::iterator mit = mmpMapPoints.find(pMP->mId);
+    if(mit != mmpMapPoints.end()) mmpMapPoints.erase(mit);
 
     //下面是作者加入的注释. 实际上只是从std::set中删除了地图点的指针, 原先地图点
     //占用的内存区域并没有得到释放
@@ -95,7 +101,9 @@ void Map::EraseKeyFrame(KeyFrame *pKF)
 {
     unique_lock<mutex> lock(mMutexMap);
     //是的,根据值来删除地图点
-    mspKeyFrames.erase(pKF);
+    // mspKeyFrames.erase(pKF);
+    std::map<idpair,KeyFrame*>::iterator mit = mmpKeyFrames.find(pKF->mId);
+    if(mit != mmpKeyFrames.end()) mmpKeyFrames.erase(mit);
 
     // TODO: This only erase the pointer.
     // Delete the MapPoint
@@ -131,28 +139,40 @@ int Map::GetLastBigChangeIdx()
 vector<KeyFrame*> Map::GetAllKeyFrames()
 {
     unique_lock<mutex> lock(mMutexMap);
-    return vector<KeyFrame*>(mspKeyFrames.begin(),mspKeyFrames.end());
+    // return vector<KeyFrame*>(mspKeyFrames.begin(),mspKeyFrames.end());
+    vector<KeyFrame*> vpKFs;
+    for(std::map<idpair,KeyFrame*>::iterator mit_set = mmpKeyFrames.begin();mit_set!=mmpKeyFrames.end();++mit_set)
+    vpKFs.push_back(mit_set->second);
+    return vpKFs;
+
 }
 
 //获取地图中的所有地图点
 vector<MapPoint*> Map::GetAllMapPoints()
 {
     unique_lock<mutex> lock(mMutexMap);
-    return vector<MapPoint*>(mspMapPoints.begin(),mspMapPoints.end());
+    // return vector<MapPoint*>(mspMapPoints.begin(),mspMapPoints.end());
+    vector<MapPoint*> vpMPs;
+    for(std::map<idpair,MapPoint*>::iterator mit_set = mmpMapPoints.begin();mit_set!=mmpMapPoints.end();++mit_set)
+        vpMPs.push_back(mit_set->second);
+    return vpMPs;
+
 }
 
 //获取地图点数目
 long unsigned int Map::MapPointsInMap()
 {
     unique_lock<mutex> lock(mMutexMap);
-    return mspMapPoints.size();
+    // return mspMapPoints.size();
+    return mmpMapPoints.size();
 }
 
 //获取地图中的关键帧数目
 long unsigned int Map::KeyFramesInMap()
 {
     unique_lock<mutex> lock(mMutexMap);
-    return mspKeyFrames.size();
+    // return mspKeyFrames.size();
+    return mmpKeyFrames.size();
 }
 
 //获取参考地图点
@@ -172,15 +192,19 @@ long unsigned int Map::GetMaxKFid()
 //清空地图中的数据
 void Map::clear()
 {
-    for(set<MapPoint*>::iterator sit=mspMapPoints.begin(), send=mspMapPoints.end(); sit!=send; sit++)
-        delete *sit;
+    // for(set<MapPoint*>::iterator sit=mspMapPoints.begin(), send=mspMapPoints.end(); sit!=send; sit++)
+    //     delete *sit;
 
-    for(set<KeyFrame*>::iterator sit=mspKeyFrames.begin(), send=mspKeyFrames.end(); sit!=send; sit++)
-        delete *sit;
+    // for(set<KeyFrame*>::iterator sit=mspKeyFrames.begin(), send=mspKeyFrames.end(); sit!=send; sit++)
+    //     delete *sit;
 
-    mspMapPoints.clear();
-    mspKeyFrames.clear();
+    mmpMapPoints.clear();
+    mmpKeyFrames.clear();
     mnMaxKFid = 0;
+    // ccm多的三个    mmpErasedMapPoints.clear();
+    // mmpErasedKeyFrames.clear();
+    //     mnMaxMPid = 0;
+
     mvpReferenceMapPoints.clear();
     mvpKeyFrameOrigins.clear();
 }
@@ -194,49 +218,62 @@ void Map::Save ( const string& filename )
     f.open(filename.c_str(), ios_base::out|ios::binary);
  
     //Number of MapPoints
-    unsigned long int nMapPoints = mspMapPoints.size();
+    unsigned long int nMapPoints = mmpMapPoints.size();
     f.write((char*)&nMapPoints, sizeof(nMapPoints) );
     //Save MapPoint sequentially
-    for ( auto mp: mspMapPoints ){
-        //Save MapPoint
-        SaveMapPoint( f, mp );
-        // cerr << "Map.cc :: Saving map point number: " << mp->mnId << endl;
+    // for ( auto mp: mspMapPoints ){
+    //     //Save MapPoint
+    //     SaveMapPoint( f, mp );
+    //     // cerr << "Map.cc :: Saving map point number: " << mp->mnId << endl;
+    // }
+
+    for (auto it = mmpMapPoints.begin(); it != mmpMapPoints.end(); ++it) {
+    MapPoint* mp = it->second;
+    // 保存MapPoint
+    SaveMapPoint(f, mp);//如果是mp的话，那么确实只有mnId，
     }
  
     //Print The number of MapPoints
-    cerr << "Map.cc :: The number of MapPoints is :"<<mspMapPoints.size()<<endl;
+    cerr << "Map.cc :: The number of MapPoints is :"<<mmpMapPoints.size()<<endl;
         
  
     //Grab the index of each MapPoint, count from 0, in which we initialized mmpnMapPointsIdx  
     GetMapPointsIdx(); 
  
     //Print the number of KeyFrames
-    cerr <<"Map.cc :: The number of KeyFrames:"<<mspKeyFrames.size()<<endl;
+    cerr <<"Map.cc :: The number of KeyFrames:"<<mmpKeyFrames.size()<<endl;
     //Number of KeyFrames
-    unsigned long int nKeyFrames = mspKeyFrames.size();
+    unsigned long int nKeyFrames = mmpKeyFrames.size();
     f.write((char*)&nKeyFrames, sizeof(nKeyFrames));
  
     //Save KeyFrames sequentially
-    for ( auto kf: mspKeyFrames )
-        SaveKeyFrame( f, kf );
- 
-    for (auto kf:mspKeyFrames )
+    // for ( auto kf: mspKeyFrames )
+    //     SaveKeyFrame( f, kf );
+    for ( auto it = mmpKeyFrames.begin();it != mmpKeyFrames.end(); ++it)
     {
+        KeyFrame* kf = it->second;
+        SaveKeyFrame( f, kf );
+    }
+ 
+    for (auto it = mmpKeyFrames.begin(); it != mmpKeyFrames.end(); ++it)
+    {
+        auto kf = it->second;
         //Get parent of current KeyFrame and save the ID of this parent
         KeyFrame* parent = kf->GetParent();
-        unsigned long int parent_id = ULONG_MAX;
-        if ( parent )
-            parent_id = parent->mnId;
-        f.write((char*)&parent_id, sizeof(parent_id));
+        idpair parent_id = std::make_pair(ULONG_MAX, ULONG_MAX);
+        if (parent)
+            parent_id = parent->mId;
+        // f.write((char*)&parent_id, sizeof(parent_id));
+        f.write(reinterpret_cast<char*>(&parent_id), sizeof(parent_id));
  
         //Get the size of the Connected KeyFrames of the current KeyFrames
         //and then save the ID and weight of the Connected KeyFrames
         unsigned long int nb_con = kf->GetConnectedKeyFrames().size();
         f.write((char*)&nb_con, sizeof(nb_con));
-        for ( auto ckf: kf->GetConnectedKeyFrames())
+        for ( auto ckf: kf->GetConnectedKeyFrames())//遍历每个相连关键帧
         {
             int weight = kf->GetWeight(ckf);
-            f.write((char*)&ckf->mnId, sizeof(ckf->mnId));
+            f.write(reinterpret_cast<char*>(&ckf->mId), sizeof(ckf->mId));
             f.write((char*)&weight, sizeof(weight));
         }
     }
@@ -252,7 +289,12 @@ void Map::Save ( const string& filename )
 void Map::SaveMapPoint( ofstream& f, MapPoint* mp)
 {   
     //Save ID and the x,y,z coordinates of the current MapPoint
-    f.write((char*)&mp->mnId, sizeof(mp->mnId));
+    // f.write((char*)&mp->mnId, sizeof(mp->mnId));
+
+    // 将 idpair类型的mId 写入文件
+    f.write(reinterpret_cast<char*>(&mp->mId), sizeof(mp->mId));//看下mId里面的数据是啥？
+    // std::cout << "mId value: " << mp->mId << std::endl;
+
     cv::Mat mpWorldPos = mp->GetWorldPos();
     f.write((char*)& mpWorldPos.at<float>(0),sizeof(float));
     f.write((char*)& mpWorldPos.at<float>(1),sizeof(float));
@@ -266,7 +308,8 @@ void Map::SaveKeyFrame( ofstream &f, KeyFrame* kf )//wuhoup20190923
 {
     //保存当前关键帧的ID和时间戳
     //Save the ID and timesteps of current KeyFrame
-    f.write((char*)&kf->mnId, sizeof(kf->mnId));
+    // f.write((char*)&kf->mnId, sizeof(kf->mnId));
+    f.write(reinterpret_cast<char*>(&kf->mId), sizeof(kf->mId));
     //cout << "saving kf->mnId = " << kf->mnId <<endl;
     f.write((char*)&kf->mTimeStamp, sizeof(kf->mTimeStamp));
     //保存当前关键帧的位姿矩阵
@@ -318,14 +361,14 @@ void Map::SaveKeyFrame( ofstream &f, KeyFrame* kf )//wuhoup20190923
         for (int j = 0; j < kf->mDescriptors.cols; j ++ )
             f.write((char*)&kf->mDescriptors.at<unsigned char>(i,j), sizeof(char));
 
-        //保存当前ORB特征对应的MapPoints的索引值
+        //保存当前ORB特征对应的MapPoints的索引值，以上都改完，下面这个的mnIdx不知道要不要改todo
 	//Save the index of MapPoints that corresponds to current ORB features
         unsigned long int mnIdx;
-        MapPoint* mp = kf->GetMapPoint(i);
+        MapPoint* mp = kf->GetMapPoint(i);//第i个orb特征点
         if (mp == NULL  )
             mnIdx = ULONG_MAX;
         else
-            mnIdx = mmpnMapPointsIdx[mp];
+            mnIdx = mmpnMapPointsIdx[mp];//orb特帧点mp对应的mappoint的索引是mnIdx
 
         f.write((char*)&mnIdx, sizeof(mnIdx));
     }
@@ -337,8 +380,13 @@ void Map::GetMapPointsIdx()
 {
     unique_lock<mutex> lock(mMutexMap);
     unsigned long int i = 0;
-    for ( auto mp: mspMapPoints )
-    {
+    // for ( auto mp: mspMapPoints )
+    // {
+    //     mmpnMapPointsIdx[mp] = i;
+    //     i += 1;
+    // }
+    for (auto it = mmpMapPoints.begin(); it != mmpMapPoints.end(); ++it) {
+        MapPoint* mp = it->second;
         mmpnMapPointsIdx[mp] = i;
         i += 1;
     }
@@ -365,7 +413,7 @@ void Map::Load ( const string &filename, SystemSetting* mySystemSetting,KeyFrame
         //1.map<size_t,map*> mspMaps;
         //2.把pMap加入到mspMaps中
     }
- 
+
     // Get all MapPoints
     std::vector<MapPoint*> vmp = GetAllMapPoints();
  
@@ -394,20 +442,23 @@ void Map::Load ( const string &filename, SystemSetting* mySystemSetting,KeyFrame
     cerr<<"Map.cc :: KeyFrame Load OVER!"<<endl;
  
     // Read Spanning Tree(open loop trajectory)
-    map<unsigned long int, KeyFrame*> kf_by_id;
-    for ( auto kf: mspKeyFrames )
-        kf_by_id[kf->mnId] = kf;
+    map<idpair, KeyFrame*> kf_by_id;
+    for (auto it = mmpKeyFrames.begin(); it != mmpKeyFrames.end(); ++it)//遍历每个kf
+    {
+        auto kf = it->second;
+        kf_by_id[kf->mId] = kf;//把kf按照mId添加进去
+    }   
     cerr<<"Map.cc :: Start Load The Parent!"<<endl;
     for( auto kf: kf_by_order )
     {
         // Read parent_id of current KeyFrame.
-        unsigned long int parent_id;
-        f.read((char*)&parent_id, sizeof(parent_id));
+        idpair parent_id;
+        f.read(reinterpret_cast<char*>(&parent_id), sizeof(parent_id));
  
         // Add parent KeyFrame to current KeyFrame.
         // cout<<"Map::Load : Add parent KeyFrame to current KeyFrame"<<endl;
-        if ( parent_id != ULONG_MAX )
-            kf->ChangeParent(kf_by_id[parent_id]);
+        if ( parent_id != std::make_pair(ULONG_MAX, ULONG_MAX))
+            kf->ChangeParent(kf_by_id[parent_id]);//将其作为kf的父关键帧
  
         // Read covisibility graphs.
         // Read the number of Connected KeyFrames of current KeyFrame.
@@ -418,9 +469,9 @@ void Map::Load ( const string &filename, SystemSetting* mySystemSetting,KeyFrame
         // cout<<"Map::Load : Read id and weight of Connected KeyFrames"<<endl;
         for ( unsigned long int i = 0; i < nb_con; i ++ )
         {
-            unsigned long int id;
+            idpair id;
             int weight;
-            f.read((char*)&id, sizeof(id));
+            f.read(reinterpret_cast<char*>(&id),sizeof(id));
             f.read((char*)&weight, sizeof(weight));
             kf->AddConnection(kf_by_id[id],weight);
         }
@@ -448,16 +499,18 @@ MapPoint* Map::LoadMapPoint( ifstream &f )
 {
         // Position and Orientation of the MapPoints.
         cv::Mat Position(3,1,CV_32F);
-        long unsigned int id;
-        f.read((char*)&id, sizeof(id));
- //从文件流中依次读取三个浮点数，分别表示地图点在x、y、z轴上的位置，然后将这些值分别存储到Position的对应位置。
+        // long unsigned int id;
+        // f.read((char*)&id, sizeof(id));
+        idpair id;
+        f.read(reinterpret_cast<char*>(&id), sizeof(id));
+//从文件流中依次读取三个浮点数，分别表示地图点在x、y、z轴上的位置，然后将这些值分别存储到Position的对应位置。
         f.read((char*)&Position.at<float>(0), sizeof(float));
         f.read((char*)&Position.at<float>(1), sizeof(float));
         f.read((char*)&Position.at<float>(2), sizeof(float));
  
         // Initialize a MapPoint, and set its id and Position.
         MapPoint* mp = new MapPoint(Position, this );
-        mp->mnId = id;
+        mp->mId = id;
         mp->SetWorldPos( Position );
  
         return mp;
@@ -469,7 +522,7 @@ KeyFrame* Map::LoadKeyFrame( ifstream &f, SystemSetting* mySystemSetting )
     InitKeyFrame initkf(*mySystemSetting);
  
     // Read ID and TimeStamp of each KeyFrame.
-    f.read((char*)&initkf.nId, sizeof(initkf.nId));
+    f.read(reinterpret_cast<char*>(&initkf.Id), sizeof(initkf.Id));
     f.read((char*)&initkf.TimeStamp, sizeof(double));
  
     // Read position and quaternion
@@ -534,7 +587,7 @@ KeyFrame* Map::LoadKeyFrame( ifstream &f, SystemSetting* mySystemSetting )
  
     // Use initkf to initialize a KeyFrame and set parameters
     KeyFrame* kf = new KeyFrame( initkf, this, NULL, vpMapPoints );
-    kf->mnId = initkf.nId;
+    kf->mId = initkf.Id;
     kf->SetPose(T);
     kf->ComputeBoW();
  
