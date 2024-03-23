@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
 
-    SLAM.LoadMap("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map0.bin");
+    SLAM.LoadMap("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map0_test.bin");
     SLAM.LoadMap("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map1.bin");
 
 

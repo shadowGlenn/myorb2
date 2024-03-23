@@ -56,7 +56,9 @@ void Map::AddKeyFrame(KeyFrame *pKF)
 {
     unique_lock<mutex> lock(mMutexMap);
     // mspKeyFrames.insert(pKF);
-    mmpKeyFrames[pKF->mId] = pKF;
+    // mmpKeyFrames[pKF->mId] = pKF;
+    mlpLoopKeyFrameQueue.push_back(pKF);//此处的mlpLoopKeyFrameQueue是自己加的，不是slam系统原有的
+
     if(pKF->mId.first>mnMaxKFid)
         mnMaxKFid=pKF->mId.first;
             //     if(pKF->mUniqueId>mnMaxKFidUnique)
@@ -403,8 +405,8 @@ void Map::Load ( const string &filename, SystemSetting* mySystemSetting,KeyFrame
     f.open( filename.c_str() );
  
     // Same as the sequence that we save the file, we first read the number of MapPoints.
-    unsigned long int nMapPoints;
-    f.read((char*)&nMapPoints, sizeof(nMapPoints));
+    unsigned long int nMapPoints;//
+    f.read((char*)&nMapPoints, sizeof(nMapPoints));//save的时候是1000多个，load的时候只有500多个
  
     // Then read MapPoints one after another, and add them into the map
     cerr<<"Map.cc :: The number of MapPoints:"<<nMapPoints<<endl;
@@ -420,24 +422,23 @@ void Map::Load ( const string &filename, SystemSetting* mySystemSetting,KeyFrame
     std::vector<MapPoint*> vmp = GetAllMapPoints();
  
     // Read the number of KeyFrames
-    unsigned long int nKeyFrames;
+    unsigned long int nKeyFrames;//100
     f.read((char*)&nKeyFrames, sizeof(nKeyFrames));
-    cerr<<"Map.cc :: The number of KeyFrames:"<<nKeyFrames<<endl;
+    cerr<<"Map.cc :: The number of KeyFrames:"<<nKeyFrames<<endl;//save的时候是25个，怎么load就变成了4个？
  
     // Then read KeyFrames one after another, and add them into the map
     vector<KeyFrame*>kf_by_order;
     for( unsigned int i = 0; i < nKeyFrames; i ++ )
     {
         KeyFrame* kf = LoadKeyFrame(f, mySystemSetting);
-        AddKeyFrame(kf);//加载第二个地图时，调试到这里就报异常，应该是上面的函数就异常了
+        AddKeyFrame(kf);//把先前保存的关键帧保存到了mlpLoopKeyFrameQueue中
         kf_by_order.push_back(kf);
                 //将关键帧添加到关键帧数据库中
         mpKeyFrameDatabase->add(kf);
-        
     }
- 
+    cerr<<"mlpLoopKeyFrameQueue.size() is: " << mlpLoopKeyFrameQueue.size() <<endl;
+   // cerr<<"mmpKeyFrames.size() is: " << mmpKeyFrames.size() <<endl;
    
- 
     cerr<<"Map.cc :: Max KeyFrame ID is: " << mnMaxKFid << ", and I set mnId to this number" <<endl;
     
  
@@ -445,11 +446,15 @@ void Map::Load ( const string &filename, SystemSetting* mySystemSetting,KeyFrame
  
     // Read Spanning Tree(open loop trajectory)
     map<idpair, KeyFrame*> kf_by_id;
-    for (auto it = mmpKeyFrames.begin(); it != mmpKeyFrames.end(); ++it)//遍历每个kf
+    // for (auto it = mmpKeyFrames.begin(); it != mmpKeyFrames.end(); ++it)//遍历每个kf
+    // {
+    //     auto kf = it->second;
+    //     kf_by_id[kf->mId] = kf;//把kf按照mId添加进去
+    // }   
+    for (auto kf : mlpLoopKeyFrameQueue) 
     {
-        auto kf = it->second;
-        kf_by_id[kf->mId] = kf;//把kf按照mId添加进去
-    }   
+        kf_by_id[kf->mId] = kf;
+    }
     cerr<<"Map.cc :: Start Load The Parent!"<<endl;
     for( auto kf: kf_by_order )
     {

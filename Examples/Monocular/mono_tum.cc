@@ -110,22 +110,22 @@ int main(int argc, char **argv)
     }
 
     // Stop all threads
-    SLAM.SaveMap("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map0.bin");
+    SLAM.SaveMap("/home/chj/下载/ORB_SLAM2_detailed_comments-master-master/Examples/Monocular/map0_test.bin");
     SLAM.Shutdown();
 
-    // Tracking time statistics
-    sort(vTimesTrack.begin(),vTimesTrack.end());
-    float totaltime = 0;
-    for(int ni=0; ni<nImages; ni++)
-    {
-        totaltime+=vTimesTrack[ni];
-    }
-    cout << "-------" << endl << endl;
-    cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
-    cout << "mean tracking time: " << totaltime/nImages << endl;
+    // // Tracking time statistics
+    // sort(vTimesTrack.begin(),vTimesTrack.end());
+    // float totaltime = 0;
+    // for(int ni=0; ni<nImages; ni++)
+    // {
+    //     totaltime+=vTimesTrack[ni];
+    // }
+    // cout << "-------" << endl << endl;
+    // cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
+    // cout << "mean tracking time: " << totaltime/nImages << endl;
 
-    // Save camera trajectory
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+    // // Save camera trajectory
+    // SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 
     return 0;
 }

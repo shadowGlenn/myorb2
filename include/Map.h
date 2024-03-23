@@ -56,6 +56,7 @@ public:
 
 typedef pair<size_t,size_t> idpair;
 
+
 void Load(const string &filename,SystemSetting* mySystemSetting, KeyFrameDatabase* mpKeyFrameDatabase);//有重定位功能
 
     MapPoint* LoadMapPoint(ifstream &f);
@@ -185,6 +186,9 @@ protected:
     // 存储所有的关键帧
     std::set<KeyFrame*> mspKeyFrames; 
     std::map<idpair,KeyFrame*> mmpKeyFrames;
+    
+    std::list<KeyFrame*> mlpLoopKeyFrameQueue;
+
     ///参考地图点
     std::vector<MapPoint*> mvpReferenceMapPoints;
 
