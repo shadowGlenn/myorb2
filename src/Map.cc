@@ -218,6 +218,8 @@ void Map::Save ( const string& filename )
     f.open(filename.c_str(), ios_base::out|ios::binary);
  
     //Number of MapPoints
+    //slam系统将数据保存在mmpMapPoints，mmpKeyFrames等变量中，因此保存也是从这些变量取出来保存
+    //那么加载呢？加载其实可以加载到不同的变量中去把？假设 nKeyFrames=100,那么加载的时候就是把这100帧依次的保存到 mmpKeyFrames 中，也可以保存在 mlploopkeyframequeue 
     unsigned long int nMapPoints = mmpMapPoints.size();
     f.write((char*)&nMapPoints, sizeof(nMapPoints) );
     //Save MapPoint sequentially
