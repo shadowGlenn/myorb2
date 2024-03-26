@@ -1048,8 +1048,8 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
  * @param LoopConnections    因闭环时地图点调整而新生成的边
  */
 void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* pCurKF,
-                                       const LoopClosing::KeyFrameAndPose &NonCorrectedSim3,
-                                       const LoopClosing::KeyFrameAndPose &CorrectedSim3,
+                                       const KeyFrameAndPose &NonCorrectedSim3,
+                                       const KeyFrameAndPose &CorrectedSim3,
                                        const map<KeyFrame *, set<KeyFrame *> > &LoopConnections, const bool &bFixScale)
 {
     // Setup optimizer
@@ -1096,7 +1096,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
         // 关键帧在所有关键帧中的id，用来设置为顶点的id
         const int nIDi = pKF->mnId;
 
-        LoopClosing::KeyFrameAndPose::const_iterator it = CorrectedSim3.find(pKF);
+        KeyFrameAndPose::const_iterator it = CorrectedSim3.find(pKF);
         if(it!=CorrectedSim3.end())
         {
             // 如果该关键帧在闭环时通过Sim3传播调整过，优先用调整后的Sim3位姿
@@ -1186,7 +1186,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
         const int nIDi = pKF->mnId;
         g2o::Sim3 Swi;
 
-        LoopClosing::KeyFrameAndPose::const_iterator iti = NonCorrectedSim3.find(pKF);
+        KeyFrameAndPose::const_iterator iti = NonCorrectedSim3.find(pKF);
         if(iti!=NonCorrectedSim3.end())
             Swi = (iti->second).inverse();  //优先使用未经过Sim3传播调整的位姿
         else
@@ -1202,7 +1202,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
             // 父关键帧id
             int nIDj = pParentKF->mnId;
             g2o::Sim3 Sjw;
-            LoopClosing::KeyFrameAndPose::const_iterator itj = NonCorrectedSim3.find(pParentKF);
+            KeyFrameAndPose::const_iterator itj = NonCorrectedSim3.find(pParentKF);
 
             //优先使用未经过Sim3传播调整的位姿
             if(itj!=NonCorrectedSim3.end())
@@ -1234,7 +1234,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
             if(pLKF->mnId<pKF->mnId)
             {
                 g2o::Sim3 Slw;
-                LoopClosing::KeyFrameAndPose::const_iterator itl = NonCorrectedSim3.find(pLKF);
+                KeyFrameAndPose::const_iterator itl = NonCorrectedSim3.find(pLKF);
                 //优先使用未经过Sim3传播调整的位姿
                 if(itl!=NonCorrectedSim3.end())
                     Slw = itl->second;
@@ -1271,7 +1271,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
                         continue;
 
                     g2o::Sim3 Snw;
-                    LoopClosing::KeyFrameAndPose::const_iterator itn = NonCorrectedSim3.find(pKFn);
+                    KeyFrameAndPose::const_iterator itn = NonCorrectedSim3.find(pKFn);
 
                     // 优先未经过Sim3传播调整的位姿
                     if(itn!=NonCorrectedSim3.end())

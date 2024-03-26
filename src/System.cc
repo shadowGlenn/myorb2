@@ -98,6 +98,8 @@ System::System(const string &strVocFile,					//词典文件路径
     mpMap = new Map();//orb2这里就是只创建一个地图，我们需要创建多个地图
     mpMap0 = new Map();
     mpMap1 = new Map();
+    mpMap2 = new Map();
+    mpMap3 = new Map();
 
     // this->InitializeMaps();
 
@@ -134,6 +136,19 @@ System::System(const string &strVocFile,					//词典文件路径
     //创建回环检测线程
     mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run,	//线程的主函数
     							mpLoopCloser);					//该函数的参数
+
+
+
+    //初始化地图匹配线程，add by chj
+    mpMapMatcher = new MapMatcher(mpKFDB,mpVoc,mpMap,mpMap0,mpMap1,mpMap2,mpMap3);
+    // mpMapMatcher.reset(new MapMatcher(mNh,mNhPrivate,mpKFDB,mpVoc,mpMap0,mpMap1,mpMap2,mpMap3));ccm写法
+
+    //启动线程
+    // mptMapMatching = new thread(&ORB_SLAM2::MapMatcher::Run,mpMapMatcher);
+
+
+
+
 
     //Initialize the Viewer thread and launch
     if(bUseViewer)
@@ -417,11 +432,11 @@ void System::Shutdown()
     {
         usleep(5000);
     }
-
-    if(mpViewer)
-    	//如果使用了可视化的窗口查看器执行这个
-    	// TODO 但是不明白这个是做什么的。如果我注释掉了呢？
-        pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+//comment by chj
+    // if(mpViewer)
+    // 	//如果使用了可视化的窗口查看器执行这个
+    // 	// TODO 但是不明白这个是做什么的。如果我注释掉了呢？
+    //     pangolin::BindToContext("ORB-SLAM2: Map Viewer");
 }
 
 //按照TUM格式保存相机运行轨迹并保存到指定的文件中

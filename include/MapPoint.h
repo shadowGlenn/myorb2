@@ -26,6 +26,12 @@ class Frame;
 class MapPoint
 {
 public:
+    typedef pair<size_t,size_t> idpair;
+    // Variables used by map matching
+    idpair mLoopPointForKF_MM;
+    idpair mCorrectedByKF_MM;
+    size_t mCorrectedReference_MM;
+
 MapPoint(const cv::Mat &Pos,Map* pMap);
 KeyFrame* SetReferenceKeyFrame(KeyFrame* RFKF);
     /**
@@ -201,7 +207,6 @@ KeyFrame* SetReferenceKeyFrame(KeyFrame* RFKF);
 
 public:
     long unsigned int mnId; ///< Global ID for MapPoint
-    typedef pair<size_t,size_t> idpair;
 
     idpair mId;//first应该就是mnId，second应该是client的id
     int clientId;

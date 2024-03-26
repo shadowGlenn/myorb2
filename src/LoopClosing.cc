@@ -116,7 +116,7 @@ void LoopClosing::InsertKeyFrame(KeyFrame *pKF)
     unique_lock<mutex> lock(mMutexLoopQueue);
     // 注意：这里第0个关键帧不能够参与到回环检测的过程中,因为第0关键帧定义了整个地图的世界坐标系
     if(pKF->mnId!=0)
-        mlpLoopKeyFrameQueue.push_back(pKF);
+        mlKfInQueue.push_back(pKF);
 }
 
 /*
@@ -126,7 +126,7 @@ void LoopClosing::InsertKeyFrame(KeyFrame *pKF)
 bool LoopClosing::CheckNewKeyFrames()
 {
     unique_lock<mutex> lock(mMutexLoopQueue);
-    return(!mlpLoopKeyFrameQueue.empty());
+    return(!mlKfInQueue.empty());
 }
 
 /**
@@ -141,9 +141,9 @@ bool LoopClosing::DetectLoop()
         // Step 1 从队列中取出一个关键帧,作为当前检测闭环关键帧
         unique_lock<mutex> lock(mMutexLoopQueue);
         // 从队列头开始取，也就是先取早进来的关键帧
-        mpCurrentKF = mlpLoopKeyFrameQueue.front();
+        mpCurrentKF = mlKfInQueue.front();
         // 取出关键帧后从队列里弹出该关键帧
-        mlpLoopKeyFrameQueue.pop_front();
+        mlKfInQueue.pop_front();
         // Avoid that a keyframe can be erased while it is being process by this thread
         // 设置当前关键帧不要在优化的过程中被删除
         mpCurrentKF->SetNotErase();
@@ -955,7 +955,7 @@ void LoopClosing::ResetIfRequested()
     // 如果有来自于外部的线程的复位请求,那么就复位当前线程
     if(mbResetRequested)
     {
-        mlpLoopKeyFrameQueue.clear();   // 清空参与和进行回环检测的关键帧队列
+        mlKfInQueue.clear();   // 清空参与和进行回环检测的关键帧队列
         mLastLoopKFid=0;                // 上一次没有和任何关键帧形成闭环关系
         mbResetRequested=false;         // 复位请求标志复位
     }

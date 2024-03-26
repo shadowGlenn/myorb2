@@ -127,6 +127,9 @@ void LocalMapping::Run()
             // Step 8 将当前帧加入到闭环检测队列中
             // 注意这里的关键帧被设置成为了bad的情况,这个需要注意
             mpLoopCloser->InsertKeyFrame(mpCurrentKeyFrame);
+            //到时候在线模式就是在这里插入
+            // mpMapMatcher->InsertKeyFrame(mpCurrentKeyFrame);
+
         }
         else if(Stop())     // 当要终止当前线程的时候
         {

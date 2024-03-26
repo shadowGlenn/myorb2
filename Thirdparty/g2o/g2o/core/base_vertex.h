@@ -27,6 +27,9 @@
 #ifndef G2O_BASE_VERTEX_H
 #define G2O_BASE_VERTEX_H
 
+//add by chj
+#define EIGEN_MAX_STATIC_ALIGN_BYTES 0
+
 #include "optimizable_graph.h"
 #include "creators.h"
 #include "../stuff/macros.h"

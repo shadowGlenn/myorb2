@@ -24,6 +24,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+//add by chj
+#define EIGEN_MAX_STATIC_ALIGN_BYTES 0
+
 #include "optimizable_graph.h"
 
 #include <cassert>

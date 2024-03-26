@@ -70,6 +70,8 @@ src/Initializer.cc
 src/Viewer.cc
 src/InitKeyFrame.cc
 src/SystemSetting.cc
+src/MapMatcher.cc
+src/MapMerger.cc
 
 )
 

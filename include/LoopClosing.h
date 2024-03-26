@@ -43,6 +43,9 @@
 #include <thread>
 #include <mutex>
 #include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
+#include <map>
+
+// #include <MapMatcher.h>
 
 namespace ORB_SLAM2
 {
@@ -63,6 +66,7 @@ public:
                 std::less<KeyFrame*>,       //排序算法
                 Eigen::aligned_allocator<std::pair<const KeyFrame*, g2o::Sim3> > // 指定分配器,和内存空间开辟有关. 为了能够使用Eigen库中的SSE和AVX指令集加速,需要将传统STL容器中的数据进行对齐处理
                 > KeyFrameAndPose;
+
 
 public:
 
@@ -187,7 +191,7 @@ protected:
     LocalMapping *mpLocalMapper;
 
     /// 一个队列, 其中存储了参与到回环检测的关键帧 (当然这些关键帧也有可能因为各种原因被设置成为bad,这样虽然这个关键帧还是存储在这里但是实际上已经不再实质性地参与到回环检测的过程中去了)
-    std::list<KeyFrame*> mlpLoopKeyFrameQueue;
+    std::list<KeyFrame*> mlKfInQueue;
 
     /// 操作参与到回环检测队列中的关键帧时,使用的互斥量
     std::mutex mMutexLoopQueue;

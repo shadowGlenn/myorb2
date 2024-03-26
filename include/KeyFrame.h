@@ -64,6 +64,10 @@ class KeyFrame
 {
 public:
 
+    typedef boost::shared_ptr<Map> mapptr;
+    typedef boost::shared_ptr<KeyFrame> kfptr;
+
+
  
 KeyFrame(InitKeyFrame &initkf,Map* pMap,KeyFrameDatabase* pKFDB,vector<MapPoint*>& vpMapPoints);
  
@@ -137,6 +141,8 @@ KeyFrame(InitKeyFrame &initkf,Map* pMap,KeyFrameDatabase* pKFDB,vector<MapPoint*
      * @return 连接的关键帧
      */
     std::vector<KeyFrame*> GetBestCovisibilityKeyFrames(const int &N);
+        // std::vector<kfptr> GetBestCovisibilityKeyFrames(const int &N);
+
     /**
      * @brief 得到与该关键帧连接的权重大于等于w的关键帧
      * @param w 权重
@@ -312,6 +318,9 @@ public:
     long unsigned int mnId;
     typedef pair<size_t,size_t> idpair;
     idpair mId;
+
+    idpair mMatchQuery;
+
     /// 每个KeyFrame基本属性是它是一个Frame，KeyFrame初始化的时候需要Frame，
     /// mnFrameId记录了该KeyFrame是由哪个Frame初始化的
     const long unsigned int mnFrameId;
@@ -401,6 +410,8 @@ public:
     const int mnMaxY;
     const cv::Mat mK;
 
+
+    Map* GetMapptr() {return mpMap;}
 
     // The following variables need to be accessed trough a mutex to be thread safe. ---- 但是大哥..protected也不是这样设计使用的啊
 protected:

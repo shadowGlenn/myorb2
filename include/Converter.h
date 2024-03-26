@@ -32,6 +32,9 @@
 #ifndef CONVERTER_H
 #define CONVERTER_H
 
+//add by chj
+#define EIGEN_MAX_STATIC_ALIGN_BYTES 0
+
 #include<opencv2/core/core.hpp>
 
 #include<Eigen/Dense>

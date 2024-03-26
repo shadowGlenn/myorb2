@@ -56,6 +56,12 @@ public:
 
 typedef pair<size_t,size_t> idpair;
 
+set<size_t> msuAssClients;
+
+std::map<idpair, KeyFrame*>& GetmmpKeyFrames() {
+        cerr << "mmpKeyFrames.size is:" << mmpKeyFrames.size();
+        return mmpKeyFrames;
+    }
 
 void Load(const string &filename,SystemSetting* mySystemSetting, KeyFrameDatabase* mpKeyFrameDatabase);//有重定位功能
 
@@ -187,7 +193,7 @@ protected:
     std::set<KeyFrame*> mspKeyFrames; 
     std::map<idpair,KeyFrame*> mmpKeyFrames;
     
-    std::list<KeyFrame*> mlpLoopKeyFrameQueue;
+    std::list<KeyFrame*> mlKfInQueue;
 
     ///参考地图点
     std::vector<MapPoint*> mvpReferenceMapPoints;

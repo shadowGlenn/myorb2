@@ -56,8 +56,8 @@ void Map::AddKeyFrame(KeyFrame *pKF)
 {
     unique_lock<mutex> lock(mMutexMap);
     // mspKeyFrames.insert(pKF);
-    // mmpKeyFrames[pKF->mId] = pKF;
-    mlpLoopKeyFrameQueue.push_back(pKF);//此处的mlpLoopKeyFrameQueue是自己加的，不是slam系统原有的
+    mmpKeyFrames[pKF->mId] = pKF;
+    // mlKfInQueue.push_back(pKF);
 
     if(pKF->mId.first>mnMaxKFid)
         mnMaxKFid=pKF->mId.first;
@@ -436,8 +436,8 @@ void Map::Load ( const string &filename, SystemSetting* mySystemSetting,KeyFrame
                 //将关键帧添加到关键帧数据库中
         mpKeyFrameDatabase->add(kf);
     }
-    cerr<<"mlpLoopKeyFrameQueue.size() is: " << mlpLoopKeyFrameQueue.size() <<endl;
-   // cerr<<"mmpKeyFrames.size() is: " << mmpKeyFrames.size() <<endl;
+    // cerr<<"mlKfInQueue.size() is: " << mlKfInQueue.size() <<endl;
+    cerr<<"mmpKeyFrames.size() is: " << mmpKeyFrames.size() <<endl;
    
     cerr<<"Map.cc :: Max KeyFrame ID is: " << mnMaxKFid << ", and I set mnId to this number" <<endl;
     
@@ -446,15 +446,15 @@ void Map::Load ( const string &filename, SystemSetting* mySystemSetting,KeyFrame
  
     // Read Spanning Tree(open loop trajectory)
     map<idpair, KeyFrame*> kf_by_id;
-    // for (auto it = mmpKeyFrames.begin(); it != mmpKeyFrames.end(); ++it)//遍历每个kf
-    // {
-    //     auto kf = it->second;
-    //     kf_by_id[kf->mId] = kf;//把kf按照mId添加进去
-    // }   
-    for (auto kf : mlpLoopKeyFrameQueue) 
+    for (auto it = mmpKeyFrames.begin(); it != mmpKeyFrames.end(); ++it)//遍历每个kf
     {
-        kf_by_id[kf->mId] = kf;
-    }
+        auto kf = it->second;
+        kf_by_id[kf->mId] = kf;//把kf按照mId添加进去
+    }   
+    // for (auto kf : mlKfInQueue) 
+    // {
+    //     kf_by_id[kf->mId] = kf;
+    // }
     cerr<<"Map.cc :: Start Load The Parent!"<<endl;
     for( auto kf: kf_by_order )
     {

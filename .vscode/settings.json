@@ -102,6 +102,18 @@
 		"xstring": "cpp",
 		"xtr1common": "cpp",
 		"xutility": "cpp",
-		"*.tcc": "cpp"
+		"*.tcc": "cpp",
+		"random": "cpp",
+		"core": "cpp",
+		"clocale": "cpp",
+		"cwctype": "cpp",
+		"array": "cpp",
+		"atomic": "cpp",
+		"strstream": "cpp",
+		"complex": "cpp",
+		"functional": "cpp",
+		"cfenv": "cpp",
+		"cinttypes": "cpp",
+		"typeindex": "cpp"
 	}
 }

@@ -1,27 +1,3 @@
-/**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
-
-/*
-这个头文件定义了ORB-SLAM2的主线程（或者称之为系统）结构，其他的各个模块都是由这里开始被调用的。
-*/
-
 
 #ifndef SYSTEM_H
 #define SYSTEM_H
@@ -42,6 +18,9 @@
 #include "ORBVocabulary.h"
 #include "Viewer.h"
 
+#include "MapMatcher.h"
+#include "MapMerger.h"
+
 namespace ORB_SLAM2
 {
 
@@ -52,12 +31,16 @@ class Map;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
+class MapMatcher;
 
 //本类的定义
 class System
 {
 public:
-//添加成员函数
+    typedef boost::shared_ptr<MapMatcher> matchptr;
+    typedef pair<size_t,size_t> idpair;
+
+
 //添加成员函数
 void LoadMap(const string &filename);
 void LoadMap0(const string &filename);
@@ -165,6 +148,23 @@ public:
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
+    MapMatcher* mpMapMatcher;
+    // matchptr mpMapMatcher;
+    std::thread* mptMapMatching;
+    
+    std::map<idpair,KeyFrame*> mmpKeyFrames;
+    
+    Map* mpMap;
+    Map* mpMap0;
+    Map* mpMap1;
+    Map* mpMap2;
+    Map* mpMap3;
+
+    KeyFrameDatabase* mpKFDB;
+    ORBVocabulary* mpVoc;
+
+
+
 private:
 
     //注意变量命名方式，类的变量有前缀m，如果这个变量是指针类型还要多加个前缀p，
@@ -184,9 +184,12 @@ private:
 
     //指向地图（数据库）的指针
     // Map structure that stores the pointers to all KeyFrames and MapPoints.
-    Map* mpMap;
-    Map* mpMap0;
-    Map* mpMap1;
+    // Map* mpMap;
+    // Map* mpMap0;
+    // Map* mpMap1;
+    // Map* mpMap2;
+    // Map* mpMap3;
+    
 
     // Tracker. It receives a frame and computes the associated camera pose.
     // It also decides when to insert a new keyframe, create some new MapPoints and
@@ -202,6 +205,10 @@ private:
     // a pose graph optimization and full bundle adjustment (in a new thread) afterwards.
     // 回环检测器，它会执行位姿图优化并且开一个新的线程进行全局BA
     LoopClosing* mpLoopCloser;
+
+    // MapMatcher* mpMapMatcher;
+    // MapMatcher.reset(new MapMatcher());
+    
 
     // The viewer draws the map and the current camera pose. It uses Pangolin.
     // 查看器，可视化 界面
@@ -219,6 +226,8 @@ private:
     std::thread* mptLocalMapping;
     std::thread* mptLoopClosing;
     std::thread* mptViewer;
+    // std::thread* mptMapMatching;//离线模式下，要将其变为public
+
 
     // Reset flag
     //复位标志，注意这里目前还不清楚为什么要定义为std::mutex类型 TODO 

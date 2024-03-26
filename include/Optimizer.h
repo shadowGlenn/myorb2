@@ -50,6 +50,9 @@ class Optimizer
 {
 public:
 
+    typedef map<KeyFrame*,g2o::Sim3,std::less<KeyFrame*>,
+        Eigen::aligned_allocator<std::pair<const KeyFrame*, g2o::Sim3> > > KeyFrameAndPose;
+
     /**
      * @brief bundle adjustment Optimization
      * 
@@ -153,8 +156,8 @@ public:
      * @param LoopConnections    因闭环时MapPoints调整而新生成的边
      */
     void static OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* pCurKF,
-                                       const LoopClosing::KeyFrameAndPose &NonCorrectedSim3,
-                                       const LoopClosing::KeyFrameAndPose &CorrectedSim3,
+                                       const KeyFrameAndPose &NonCorrectedSim3,
+                                       const KeyFrameAndPose &CorrectedSim3,
                                        const map<KeyFrame *, set<KeyFrame *> > &LoopConnections,
                                        const bool &bFixScale);
 
